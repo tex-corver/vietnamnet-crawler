@@ -1,13 +1,12 @@
 from crawler.crawler import Crawler
+import csv
 
 if __name__ == "__main__":
     crawler = Crawler()
-    data = crawler.crawl()
-
-    # Write the data to a file
-    with open("output.txt", "w") as file:
-        for category, articles in data.items():
-            file.write(f"{category}:\n")
-            for article in articles:
-                file.write(f"- {article}\n")
-            file.write("\n")
+    articles = crawler.crawl()
+    file_path = "data.csv"
+    fieldnames = articles[0].keys()
+    with open(file_path, "w", newline="", encoding="utf-8") as csv_file:
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(articles)

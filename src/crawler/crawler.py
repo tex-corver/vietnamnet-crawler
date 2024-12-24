@@ -4,13 +4,19 @@ from bs4 import BeautifulSoup
 
 class Crawler:
     def __init__(self):
-        self.base_url = "https://vietnamnet.vn/"
+        self.base_url = "https://vietnamnet.vn"
+        self.max_pages = 10
 
     def crawl(self):
         categories = self.fetch_categories()
-        articles = {}
+        articles = []
+
         for category in categories:
-            articles[category] = self.fetch_articles(category)
+            article_links = self.fetch_articles(category)
+            for article_link in article_links:
+                article = self.fetch_article(article_link)
+                if article:
+                    articles.append({"category": category} | article)
         return articles
 
     def fetch_categories(self):
@@ -35,24 +41,77 @@ class Crawler:
 
     def fetch_articles(self, category):
         url = self.base_url + category
-        response = requests.get(url)
-        if response.status_code == 200:
-            html = response.text
-        else:
-            print("Failed to fetch the webpage:", response.status_code)
-            exit()
+        links = []
+        for page in range(0, self.max_pages):
+            page_url = url + f"-page{page}/"
 
+            response = requests.get(page_url)
+            if response.status_code == 200:
+                html = response.text
+            else:
+                print("Failed to fetch the webpage:", response.status_code)
+                exit()
+
+            soup = BeautifulSoup(html, "html.parser")
+
+            articles = soup.find_all(
+                "h3", class_="horizontalPost__main-title vnn-title title-bold"
+            )
+            for article in articles:
+                link = article.find("a")
+                links.append(link.get("href"))
+
+        return links
+
+    def fetch_article(self, link):
+        url = self.base_url + link
+        try:
+            response = requests.get(url)
+            response.raise_for_status()
+        except requests.RequestException as e:
+            print(f"Failed to fetch article {url}: {e}")
+            return {}
+
+        html = response.text
         soup = BeautifulSoup(html, "html.parser")
 
-        articles = soup.find_all(
-            "h3", class_="verticalPost__main-title vnn-title title-bold"
-        ) + soup.find_all(
-            "h3", class_="horizontalPost__main-title vnn-title title-bold"
-        )
-        titles = []
-        for article in articles:
-            link = article.find("a")  # Find the <a> tag inside the <h3>
-            if link and "title" in link.attrs:  # Check if the 'title' attribute exists
-                titles.append(link["title"])  # Extract the title attribute
+        title = soup.find("h1", class_="content-detail-title")
+        if title:
+            title = title.text
+        else:
+            title = "N/A"
 
-        return titles
+        author = soup.find("p", class_="article-detail-author__info")
+        if author:
+            author = author.text.replace("\n", "").replace("\r", "").strip()
+            author = " ".join(author.split())
+        else:
+            author = "N/A"
+
+        summary = soup.find("h2", class_="content-detail-sapo sm-sapo-mb-0")
+        if summary:
+            summary = summary.text
+        else:
+            summary = "N/A"
+
+        content = soup.find("div", class_="maincontent main-content")
+        if content:
+            content = content.text.replace("\n", "").replace("\r", "").strip()
+            content = " ".join(content.split())
+        else:
+            content = "N/A"
+
+        time = soup.find("div", class_="bread-crumb-detail__time")
+        if time:
+            time = time.text.replace("\n", "").replace("\r", "").strip()
+        else:
+            time = "N/A"
+
+        return {
+            "url": url,
+            "title": title,
+            "author": author,
+            "time": time,
+            "summary": summary,
+            "content": content,
+        }
