@@ -1,11 +1,15 @@
 import requests
 from bs4 import BeautifulSoup
+import time
+import random
 
 
 class Crawler:
     def __init__(self):
         self.base_url = "https://vietnamnet.vn"
         self.max_pages = 10
+        self.max_retries = 5
+        self.initial_delay = 1
 
     def crawl(self):
         categories = self.fetch_categories()
@@ -20,23 +24,18 @@ class Crawler:
         return articles
 
     def fetch_categories(self):
-        response = requests.get(self.base_url)
-        if response.status_code == 200:
-            html = response.text
-        else:
-            print("Failed to fetch the webpage:", response.status_code)
+        response = self.request_with_backoff(self.base_url)
+        if not response:
+            print("Failed to fetch the webpage after retries.")
             exit()
 
-        soup = BeautifulSoup(html, "html.parser")
-
+        soup = BeautifulSoup(response.text, "html.parser")
         category_items = soup.find_all("li", class_="mainNav__list-item swiper-slide")
-
-        categories = []
-        for item in category_items:
-            path = item.get("routeractive")
-            if path:
-                categories.append(path)
-
+        categories = [
+            item.get("routeractive")
+            for item in category_items
+            if item.get("routeractive")
+        ]
         return categories
 
     def fetch_articles(self, category):
@@ -44,68 +43,49 @@ class Crawler:
         links = []
         for page in range(0, self.max_pages):
             page_url = url + f"-page{page}/"
+            response = self.request_with_backoff(page_url)
+            if not response:
+                print(f"Failed to fetch page {page_url} after retries.")
+                continue
 
-            response = requests.get(page_url)
-            if response.status_code == 200:
-                html = response.text
-            else:
-                print("Failed to fetch the webpage:", response.status_code)
-                exit()
-
-            soup = BeautifulSoup(html, "html.parser")
-
+            soup = BeautifulSoup(response.text, "html.parser")
             articles = soup.find_all(
                 "h3", class_="horizontalPost__main-title vnn-title title-bold"
             )
             for article in articles:
                 link = article.find("a")
-                links.append(link.get("href"))
-
+                if link:
+                    links.append(link.get("href"))
         return links
 
     def fetch_article(self, link):
-        url = self.base_url + link
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-        except requests.RequestException as e:
-            print(f"Failed to fetch article {url}: {e}")
+        if self.base_url not in link:
+            url = self.base_url + link
+        else:
+            url = link
+
+        print(f"Fetching article: {url}")
+
+        response = self.request_with_backoff(url)
+        if not response:
+            print(f"Failed to fetch article {url} after retries.")
             return {}
 
-        html = response.text
-        soup = BeautifulSoup(html, "html.parser")
-
+        soup = BeautifulSoup(response.text, "html.parser")
         title = soup.find("h1", class_="content-detail-title")
-        if title:
-            title = title.text
-        else:
-            title = "N/A"
+        title = title.text.strip() if title else "N/A"
 
         author = soup.find("p", class_="article-detail-author__info")
-        if author:
-            author = author.text.replace("\n", "").replace("\r", "").strip()
-            author = " ".join(author.split())
-        else:
-            author = "N/A"
+        author = " ".join(author.text.split()) if author else "N/A"
 
         summary = soup.find("h2", class_="content-detail-sapo sm-sapo-mb-0")
-        if summary:
-            summary = summary.text
-        else:
-            summary = "N/A"
+        summary = summary.text.strip() if summary else "N/A"
 
         content = soup.find("div", class_="maincontent main-content")
-        if content:
-            content = content.text.replace("\n", "").replace("\r", "").strip()
-            content = " ".join(content.split())
-        else:
-            content = "N/A"
+        content = " ".join(content.text.split()) if content else "N/A"
 
         time = soup.find("div", class_="bread-crumb-detail__time")
-        if time:
-            time = time.text.replace("\n", "").replace("\r", "").strip()
-        else:
-            time = "N/A"
+        time = time.text.strip() if time else "N/A"
 
         return {
             "url": url,
@@ -115,3 +95,21 @@ class Crawler:
             "summary": summary,
             "content": content,
         }
+
+    def request_with_backoff(self, url):
+        delay = self.initial_delay
+        for attempt in range(self.max_retries):
+            try:
+                response = requests.get(url, timeout=10)
+                response.raise_for_status()
+                return response
+            except requests.RequestException as e:
+                print(f"Request failed ({url}): {e}")
+                if attempt == self.max_retries - 1:
+                    print("Max retries reached. Skipping...")
+                    return None
+                wait_time = delay + random.uniform(0, 1)
+                print(f"Retrying in {wait_time:.2f} seconds...")
+                time.sleep(wait_time)
+                delay *= 2
+        return None
