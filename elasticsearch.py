@@ -3,31 +3,25 @@ import opensearchpy
 import requests_aws4auth
 import boto3
 
-REGION = "ap-southeast-1"
-HOST = "search-vietnamnet-es-im2m3jyzohytgvm7xaoorgstaq.ap-southeast-1.es.amazonaws.com"
-INDEX = "articles"
+import utils
+
+config = utils.get_config()
 CSV_FILE = "data.csv"
+INDEX = "articles"
 
 session = boto3.Session()
 credentials = session.get_credentials()
 awsauth = requests_aws4auth.AWS4Auth(
     credentials.access_key,
     credentials.secret_key,
-    REGION,
+    config["aws"]["region"],
     "es",
     session_token=credentials.token,
 )
 
 client = opensearchpy.OpenSearch(
-    hosts=[
-        {
-            "host": HOST,
-            "port": 443,
-        }
-    ],
+    **config["opensearch"],
     http_auth=awsauth,
-    use_ssl=True,
-    verify_certs=True,
     connection_class=opensearchpy.RequestsHttpConnection,
 )
 
@@ -104,7 +98,7 @@ if __name__ == "__main__":
             },
         },
     )
-    # index_csv(CSV_FILE)
+    index_csv(CSV_FILE)
 
     field = input("Search field (title, author, time, summary, content): ")
     query = input("Search query: ")
