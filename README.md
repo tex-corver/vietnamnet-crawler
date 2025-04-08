@@ -74,7 +74,7 @@ This repository uses `poetry` (as shown by the poetry.lock file).
     
 -   Each article row includes:
 
-    `category` – the news section (e.g. Thời sự, Xã hội)
+    `category` – the news section
 
     `url` – direct link to the article
     
