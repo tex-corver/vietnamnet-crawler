@@ -1,0 +1,22 @@
+targets:
+  - base_url: https://vietnamnet.vn
+    initial_delay: 1
+    max_retries: 5
+    max_pages: 1
+    page_prefix: -page
+    category:
+      tag: li
+      class: mainNav__list-item swiper-slide
+    article:
+      tag: h3
+      class: horizontalPost__main-title vnn-title title-bold
+    title:
+      - [h1, content-detail-title]
+    author:
+      - [p, article-detail-author__info]
+    summary:
+      - [h2, content-detail-sapo sm-sapo-mb-0]
+    content:
+      - [div, maincontent main-content]
+    time:
+      - [div, bread-crumb-detail__time]
