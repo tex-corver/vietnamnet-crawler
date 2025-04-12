@@ -40,13 +40,13 @@
     
 ## Development requirements
 
-This repository uses `poetry` (as shown by the poetry.lock file).
+This repository uses `poetry 1.8.5` (as shown by the poetry.lock file).
 
 
--   Install `poetry` if you haven't already:
+-   Install `poetry 1.8.5` if you haven't already:
 
     ```
-    pip install poetry
+    pip install poetry==1.8.5
     ```
 
 -   Installing dependencies:
