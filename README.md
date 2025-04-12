@@ -57,7 +57,7 @@ This repository uses `poetry 1.8.5` (as shown by the poetry.lock file).
 
 # Running the Script
 
--   To run the tests, simply use the behave command:
+-   To run the tests, simply use the make command:
 
     ```bash
     make local-run
