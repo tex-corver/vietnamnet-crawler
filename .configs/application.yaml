@@ -1,9 +1,6 @@
 application:
   name: vietnamnet_crawler
 
-  aws:
-    region: ap-southeast-1
-
   elasticsearch:
     host: http://localhost:9200
   
