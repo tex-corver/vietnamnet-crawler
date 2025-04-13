@@ -5,9 +5,5 @@ application:
     region: ap-southeast-1
 
   elasticsearch:
-    hosts:
-      - host: search-vietnamnet-es-im2m3jyzohytgvm7xaoorgstaq.ap-southeast-1.es.amazonaws.com
-        port: 443
-    use_ssl: true
-    verify_certs: true
+    host: http://localhost:9200
   
