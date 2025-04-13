@@ -9,16 +9,12 @@ packages = [{include = "vietnamnet_crawler"}]
 [tool.poetry.dependencies]
 python = "^3.12"
 beautifulsoup4 = "^4.12.3"
-nltk = "^3.9.1"
-newspaper3k = "^0.2.8"
 lxml-html-clean = "^0.4.1"
-opensearch-py = "^2.8.0"
 pandas = "^2.2.3"
-boto3 = "^1.37.4"
-requests-aws4auth = "^1.3.1"
 
 tex-corver-core = {git = "git@github.com:tex-corver/core.git"}
 tex-corver-utils = {git = "git@github.com:tex-corver/utils.git"}
+elasticsearch = "^8.17.2"
 
 [build-system]
 requires = ["poetry-core"]
