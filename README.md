@@ -7,7 +7,7 @@
 -   Clone the repository
 -   Set up configuration
 
-    You can store the information of the targets in .configs/targets.yaml
+    You can store the information of the targets in `.configs/targets.yaml`
 
     Example targets.yaml:
     
@@ -87,3 +87,63 @@ This repository uses `poetry 1.8.5` (as shown by the poetry.lock file).
     `content` – full article body
     
     `time` – publication date/time
+
+# Elasticsearch
+
+This project includes a script to index and search crawled data using Elasticsearch.
+
+## Configurations
+-   You can set the Elasticsearch connection in `.configs/application.yaml`
+
+    ```yaml
+    ...
+    elasticsearch:
+      host: http://localhost:9200
+    ```
+
+## Running Elasticsearch Locally with Docker
+
+-   You can quickly spin up an Elasticsearch container locally:
+
+    ```bash
+    docker run -d \
+    --name elasticsearch-container \
+    -p 9200:9200 \
+    -e "discovery.type=single-node" \
+    -e "xpack.security.enabled=false" \
+    docker.elastic.co/elasticsearch/elasticsearch:8.11.1
+    ```
+
+    This will expose Elasticsearch at `http://localhost:9200`.
+
+## Indexing Articles to Elasticsearch
+
+-   After you've generated `data.csv`, use the provided script to load the data into Elasticsearch:
+
+    ```bash
+    make elasticsearch
+    ```
+
+    Or run the script manually:
+
+    ```bash
+    CONFIG_PATH=.configs python es_script.py
+    ```
+
+-   This will:
+    -   Create an articles index (if it doesn't exist)
+    -   Read rows from `data.csv`
+    -   Convert each row to a JSON document
+    -   Insert into Elasticsearch (skipping duplicates based on `url`)
+
+## Searching Indexed Articles
+
+-   Once indexed, the script will prompt you to search articles:
+
+    ```bash
+    Search the articles:
+    Search field (title, author, time, summary, content): ...
+    Search query: ...
+    ```
+
+    It will then print matched documents from Elasticsearch.
