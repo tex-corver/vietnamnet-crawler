@@ -15,6 +15,8 @@ pandas = "^2.2.3"
 tex-corver-core = {git = "git@github.com:tex-corver/core.git"}
 tex-corver-utils = {git = "git@github.com:tex-corver/utils.git"}
 elasticsearch = "^8.17.2"
+py-vncorenlp = "^0.1.4"
+scikit-learn = "^1.7.0"
 
 [build-system]
 requires = ["poetry-core"]
